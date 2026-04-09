@@ -2,47 +2,18 @@ import time
 import random
 import string
 import threading
-import os
-import shutil
-import stat
-import seleniumbase
 from concurrent.futures import ThreadPoolExecutor
 from seleniumbase import SB
 from faker import Faker
 
 file_lock = threading.Lock()
 
-def patch_driver_for_arm():
-    """
-    Автоматически подменяет драйвер SeleniumBase на системный ARM-драйвер,
-    чтобы избежать ошибки 'Exec format error'.
-    """
-    system_driver = "/usr/bin/chromedriver"
-    if not os.path.exists(system_driver):
-        print("⚠️ ВНИМАНИЕ: Не найден системный драйвер! Выполните команду: sudo apt install chromium-driver -y")
-        return
-
-    # Находим папку, куда SeleniumBase скачивает драйверы
-    sb_dir = os.path.dirname(seleniumbase.__file__)
-    uc_driver_path = os.path.join(sb_dir, "drivers", "uc_driver")
-    
-    try:
-        # Копируем рабочий системный драйвер на место сломанного
-        if os.path.exists(uc_driver_path):
-            os.remove(uc_driver_path)
-        shutil.copy(system_driver, uc_driver_path)
-        
-        # Выдаем права на выполнение
-        os.chmod(uc_driver_path, os.stat(uc_driver_path).st_mode | stat.S_IEXEC)
-        print("🛠️ Драйвер успешно пропатчен под архитектуру ARM!")
-    except Exception as e:
-        pass
-
 def generate_password(length=14):
     chars = string.ascii_letters + string.digits + "!@#$%^&*"
     return ''.join(random.choice(chars) for _ in range(length))
 
 def register_account(task_id):
+    # Плавный запуск (разница между стартами окон)
     time.sleep(task_id * 2.5)
     
     fake = Faker('en_US')
@@ -53,13 +24,8 @@ def register_account(task_id):
     print(f"[Поток {task_id}] 🚀 Старт: {email}")
 
     try:
-        # Теперь параметры чистые, а драйвер уже вылечен функцией выше
-        with SB(
-            uc=True, 
-            xvfb=True, 
-            browser="chrome",
-            binary_location="/usr/bin/chromium"
-        ) as sb:
+        # Чистый и простой запуск. xvfb=True нужен для работы без монитора в консоли
+        with SB(uc=True, xvfb=True) as sb:
             
             sb.open("https://z.org/register")
             sb.sleep(4)
@@ -107,11 +73,8 @@ def register_account(task_id):
 
 def main():
     print("="*40)
-    print("   Elektrine CLI AutoReger (ARM/Debian)   ")
+    print("   Elektrine CLI AutoReger   ")
     print("="*40)
-    
-    # Автоматически чиним драйвер перед запуском
-    patch_driver_for_arm()
     
     try:
         total_accounts = int(input("👉 Сколько аккаунтов создать?: "))
