@@ -24,9 +24,16 @@ def register_account(task_id):
     print(f"[Поток {task_id}] 🚀 Старт: {email}")
 
     try:
-        # На Linux сервере ОБЯЗАТЕЛЬНО используем xvfb=True 
-        # Это создает виртуальный монитор, без которого Cloudflare забанит headless-браузер
-        with SB(uc=True, xvfb=True) as sb:
+        # ЖЕСТКО УКАЗЫВАЕМ ПУТИ ДО СИСТЕМНОГО ARM-БРАУЗЕРА
+        # Это навсегда запретит SeleniumBase качать сломанный драйвер
+        with SB(
+            uc=True, 
+            xvfb=True, 
+            browser="chrome",
+            binary_location="/usr/bin/chromium", 
+            driver_path="/usr/bin/chromedriver"
+        ) as sb:
+            
             sb.open("https://z.org/register")
             sb.sleep(4)
             
@@ -73,7 +80,7 @@ def register_account(task_id):
 
 def main():
     print("="*40)
-    print("   Elektrine CLI AutoReger (Debian)   ")
+    print("   Elektrine CLI AutoReger (ARM/Debian)   ")
     print("="*40)
     
     try:
